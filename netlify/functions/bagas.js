@@ -1,13 +1,13 @@
-// netlify/functions/bagas.js
+// netlify/functions/absen.js
 
-import fetch from 'node-fetch';
-import { CookieJar } from 'tough-cookie';
-import fetchCookie from 'fetch-cookie';
+const fetch = require('node-fetch');
+const { CookieJar } = require('tough-cookie');
+const fetchCookie = require('fetch-cookie');
 
 const jar = new CookieJar();
 const fetchWithCookies = fetchCookie(fetch, jar);
 
-export async function handler(event, context) {
+exports.handler = async (event, context) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -32,19 +32,23 @@ export async function handler(event, context) {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
-        email: '13636@gmail.com', // Ambil dari environment variable
-        password: '13636' // Ambil dari environment variable
+        email: process.env.EMAIL, // Gunakan environment variable
+        password: process.env.PASSWORD // Gunakan environment variable
       })
     });
 
     const loginResult = await loginRes.text();
     
     if (!loginResult.toLowerCase().includes('success')) {
-      console.error('Login gagal:', loginResult);
+      console.error('Login failed:', loginResult);
       return {
         statusCode: 401,
         headers: { 'Access-Control-Allow-Origin': '*' },
-        body: JSON.stringify({ status: 'error', message: 'Autentikasi gagal' })
+        body: JSON.stringify({ 
+          status: 'error', 
+          message: 'Authentication failed',
+          detail: loginResult 
+        })
       };
     }
 
@@ -82,7 +86,9 @@ export async function handler(event, context) {
       headers: { 'Access-Control-Allow-Origin': '*' },
       body: JSON.stringify({
         status: 'error',
-        message: 'Terjadi kesalahan internal'
+        message: 'Internal server error',
+        error_detail: err.message
       })
     };
   }
+};
